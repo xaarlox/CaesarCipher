@@ -13,7 +13,7 @@ class DataValidator:
     @staticmethod
     def validate_text(text: str) -> str:
         if not isinstance(text, str):
-            raise TypeError(f"Expected a string, got {type(text.__name__)} instead.")
+            raise TypeError(f"Expected a string, got {type(text).__name__} instead.")
         if len(text) == 0:
             raise ValueError("Input text cannot be empty.")
         return text
