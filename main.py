@@ -1,4 +1,4 @@
-from caesar_cipher import CipherApp
+from caesar_cipher.gui import CipherApp
 
 
 def main():

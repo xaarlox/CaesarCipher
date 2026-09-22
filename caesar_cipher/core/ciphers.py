@@ -19,7 +19,8 @@ class TextCaesarCipher(BaseCipher):
     ENG_LOWER = "abcdefghijklmnopqrstuvwxyz"
     ENG_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-    def _shift_char(self, char: str, alphabet: str, shift: int) -> str:
+    @staticmethod
+    def _shift_char(char: str, alphabet: str, shift: int) -> str:
         n = len(alphabet)
         current_idx = alphabet.index(char)
         new_idx = (current_idx + shift) % n
