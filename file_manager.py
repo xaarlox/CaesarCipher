@@ -13,7 +13,7 @@ class FileManager:
     def read_file(file_path: str | Path) -> str:
         path = Path(file_path)
         if not path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
+            raise FileNotFoundError(f"Файл не знайдено: {file_path}")
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
 
@@ -28,7 +28,7 @@ class FileManager:
     def print_file_to_system(file_path: str | Path) -> bool:
         path = Path(file_path).resolve()
         if not path.exists():
-            raise FileNotFoundError(f"Cannot print: file {file_path} does not exist.")
+            raise FileNotFoundError(f"Неможливо надрукувати: файл '{file_path}' не існує.")
 
         current_os = platform.system()
         try:
@@ -42,8 +42,8 @@ class FileManager:
                 subprocess.run(["lp", str(path)], check=True)
                 return True
             else:
-                raise NotImplementedError(f"Printing is not supported on {current_os}.")
+                raise NotImplementedError(f"Друк не підтримується на цій ОС: {current_os}.")
         except NotImplementedError:
             raise
         except Exception as err:
-            raise RuntimeError(f"System printing error: {err}") from err
+            raise RuntimeError(f"Помилка системного друку: {err}") from err
