@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from validators import DataValidator, KeyValidator
+from caesar_cipher.core.validators import DataValidator, KeyValidator
 
 
 class BaseCipher(ABC):
@@ -51,3 +51,24 @@ class TextCaesarCipher(BaseCipher):
         valid_text = DataValidator.validate_text(data)
         valid_key = KeyValidator.validate(key)
         return self._transform(valid_text, -valid_key)
+
+
+class UniversalByteCaesarCipher(BaseCipher):
+    @staticmethod
+    def _build_table(shift: int) -> bytes:
+        shift %= 256
+        return bytes((i + shift) % 256 for i in range(256))
+
+    def _transform(self, data: bytes, shift: int) -> bytes:
+        table = self._build_table(shift)
+        return data.translate(table)
+
+    def encrypt(self, data: bytes, key) -> bytes:
+        valid_data = DataValidator.validate_bytes(data)
+        valid_key = KeyValidator.validate(key)
+        return self._transform(valid_data, valid_key)
+
+    def decrypt(self, data: bytes, key) -> bytes:
+        valid_data = DataValidator.validate_bytes(data)
+        valid_key = KeyValidator.validate(key)
+        return self._transform(valid_data, -valid_key)

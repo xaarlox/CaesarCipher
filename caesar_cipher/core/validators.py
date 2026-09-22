@@ -17,3 +17,11 @@ class DataValidator:
         if len(text) == 0:
             raise ValueError("Текст для обробки не може бути порожнім.")
         return text
+
+    @staticmethod
+    def validate_bytes(data: bytes) -> bytes:
+        if not isinstance(data, (bytes, bytearray)):
+            raise TypeError(f"Очікувались байти, отримано {type(data).__name__}.")
+        if len(data) == 0:
+            raise ValueError("Дані для обробки не можуть бути порожніми.")
+        return bytes(data)

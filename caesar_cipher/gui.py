@@ -5,10 +5,11 @@ from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 
-from ciphers import TextCaesarCipher
-from file_manager import FileManager
+from caesar_cipher.core.ciphers import TextCaesarCipher, UniversalByteCaesarCipher
+from caesar_cipher.core.file_manager import FileManager
 
 FILE_TYPES = [("Текстові файли", "*.txt"), ("Усі файли", "*.*")]
+ANY_FILE_TYPES = [("Усі файли", "*.*")]
 
 UI_SCALE = 2.0
 ctk.set_widget_scaling(UI_SCALE)
@@ -46,13 +47,14 @@ class CipherApp(ctk.CTk):
                 pass
 
         self.title("Шифр Цезаря")
-        self.geometry("1500x800")
+        self.geometry("1600x900")
         self.minsize(1100, 600)
 
         ctk.set_appearance_mode("system")
         ctk.set_default_color_theme("blue")
 
         self.cipher = TextCaesarCipher()
+        self.byte_cipher = UniversalByteCaesarCipher()
         self.current_file: Path | None = None
         self.editor_font = pick_monospace_font(self)
         hide_hidden_files_in_dialogs(self)
@@ -60,10 +62,16 @@ class CipherApp(ctk.CTk):
         self._build_toolbar()
         self._build_editor()
         self._build_statusbar()
+        self._build_binary_tools()
         self._bind_shortcuts()
 
         self.protocol("WM_DELETE_WINDOW", self.exit_app)
         self._update_title()
+
+    def _make_button(self, parent, text, cmd, width=100, **kw):
+        b = ctk.CTkButton(parent, text=text, width=width, command=cmd, **kw)
+        b.pack(side="left", padx=4, pady=6)
+        return b
 
     def _build_toolbar(self):
         bar = ctk.CTkFrame(self)
@@ -95,6 +103,20 @@ class CipherApp(ctk.CTk):
             fg_color="#2e7d32", hover_color="#1b5e20")
         btn(crypto, "Розшифрувати", self.decrypt, width=140,
             fg_color="#ef6c00", hover_color="#e65100")
+
+    def _build_binary_tools(self):
+        binary_row = ctk.CTkFrame(self)
+        binary_row.pack(fill="x", padx=8, pady=(0, 4))
+
+        ctk.CTkLabel(
+            binary_row,
+            text="Файл будь-якого формату (jpg, pdf, docx тощо):",
+        ).pack(side="left", padx=(8, 2))
+
+        self._make_button(binary_row, "Зашифрувати файл", self.encrypt_file, width=160,
+                          fg_color="#00695c", hover_color="#004d40")
+        self._make_button(binary_row, "Розшифрувати файл", self.decrypt_file, width=170,
+                          fg_color="#4527a0", hover_color="#311b92")
 
     def _build_editor(self):
         ctk.CTkLabel(self, text="Введіть текст (українська/англійська) або відкрийте файл:",
@@ -224,6 +246,44 @@ class CipherApp(ctk.CTk):
     def decrypt(self):
         self._run_cipher(self.cipher.decrypt, "Текст розшифровано")
 
+    def _process_file(self, action, done_word: str, suggested_suffix: str = "", strip_suffix: str = ""):
+        src_path = filedialog.askopenfilename(filetypes=ANY_FILE_TYPES)
+        if not src_path:
+            return
+
+        name = Path(src_path).name
+        if strip_suffix and name.endswith(strip_suffix):
+            name = name[: -len(strip_suffix)]
+        default_name = name + suggested_suffix
+
+        dest_path = filedialog.asksaveasfilename(
+            initialfile=default_name, filetypes=ANY_FILE_TYPES
+        )
+        if not dest_path:
+            return
+
+        try:
+            data = FileManager.read_bytes(src_path)
+            result = action(data, self.key_entry.get().strip())
+            FileManager.save_bytes(dest_path, result)
+        except (ValueError, TypeError) as err:
+            messagebox.showerror("Помилка", str(err))
+            return
+        except OSError as err:
+            messagebox.showerror("Помилка файлу", str(err))
+            return
+
+        self._set_status(f"Файл {done_word}: {dest_path}")
+        messagebox.showinfo(
+            "Готово", f"Файл успішно {done_word} та збережено:\n{dest_path}"
+        )
+
+    def encrypt_file(self):
+        self._process_file(self.byte_cipher.encrypt, "зашифровано", suggested_suffix=".enc")
+
+    def decrypt_file(self):
+        self._process_file(self.byte_cipher.decrypt, "розшифровано", strip_suffix=".enc")
+
     def show_about(self):
         messagebox.showinfo(
             "Про розробника",
@@ -238,7 +298,3 @@ class CipherApp(ctk.CTk):
     def exit_app(self):
         if self._confirm_discard():
             self.destroy()
-
-
-if __name__ == "__main__":
-    CipherApp().mainloop()

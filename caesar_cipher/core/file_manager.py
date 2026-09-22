@@ -25,6 +25,19 @@ class FileManager:
             f.write(content)
 
     @staticmethod
+    def read_bytes(file_path: str | Path) -> bytes:
+        path = Path(file_path)
+        if not path.exists():
+            raise FileNotFoundError(f"Файл не знайдено: {file_path}")
+        return path.read_bytes()
+
+    @staticmethod
+    def save_bytes(file_path: str | Path, content: bytes) -> None:
+        path = Path(file_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+
+    @staticmethod
     def print_file_to_system(file_path: str | Path) -> bool:
         path = Path(file_path).resolve()
         if not path.exists():
